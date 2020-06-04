@@ -1,0 +1,41 @@
+import {assert, expect, cbor_encode, cbor_decode, phorbas_test_ctx, store_text_lines, load_text_lines} from './_utils.jsy'
+import {poem_lines} from './poem.jsy'
+
+describe @ 'smoke', @::
+  it @ 'basics', @::
+    assert @ 'works'
+
+  it @ 'single store roundtrip', @::>
+    const sync = new Set()
+    const stg = await phorbas_test_ctx()
+
+    const k21 = await store_text_lines(poem_lines, sync, stg)
+
+    const rt_lines = await Promise.all @
+      await load_text_lines(k21, stg)
+
+    assert.deepEqual(rt_lines, poem_lines)
+
+
+  it @ 'two store sync roundtrip', @::>
+    const sync = new Set()
+    const stg_src = await phorbas_test_ctx()
+
+    const k21 = await store_text_lines(poem_lines, sync, stg_src)
+
+    const stg_dst = await phorbas_test_ctx()
+    :: // prove it DOES NOT work without sync
+      assert.equal @
+        await load_text_lines(k21, stg_dst)
+        undefined
+
+    :: // sync everything in the set
+      const u8_pairs = await stg_src.bkc_fetch(sync)
+      await stg_dst.bkc_store(u8_pairs)
+
+    :: // prove it DOES work after sync
+      const rt_lines = await Promise.all @
+        await load_text_lines(k21, stg_dst)
+
+      assert.deepEqual(rt_lines, poem_lines)
+

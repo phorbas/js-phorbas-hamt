@@ -1,0 +1,26 @@
+{
+  "private": true,
+  "dependencies": {
+    "@phorbas/hamt": "file:..",
+    "@phorbas/opaque": "file:../../phorbas-opaque",
+    "@phorbas/store": "file:../../phorbas-store",
+    "chai": "^4.2.0",
+    "mocha": "^7.2.0"
+  },
+  "devDependencies": {
+    "cbor-codec": "^0.2.3",
+    "qsrv": "^0.1.7",
+    "u8-utils": "^0.3.7"
+  },
+  "scripts": {
+    "prebuild": "test -d ./node_modules || npm -s install",
+    "build": "../node_modules/.bin/rollup --config",
+    "clean": "rm ./__unittest.*",
+    "watch": "npm -s run build -- --watch",
+    "serve": "qsrv --fallback unittest.html -- __unittest.iife.js",
+    "pretest": "npm -s run build",
+    "test": "npm -s run test:one",
+    "test:one": "NODE_OPTIONS=--enable-source-maps  mocha ./__unittest.cjs.js",
+    "test:min": "NODE_OPTIONS=--enable-source-maps  mocha --reporter=min ./__unittest.cjs.js"
+  }
+}

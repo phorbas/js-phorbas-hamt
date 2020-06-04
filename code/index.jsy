@@ -1,6 +1,19 @@
-export default @
-  Promise
-  .resolve @ new Date
-  .then @ ts => ::
-    console.log @
-      `Hello from JSY at ${ts.toISOString()} (generated on 2020-01-29T21:33:10.544Z)!`
+import {HAMTContext} from './hamt_context.jsy'
+import {bind_hamt_root} from './root_api.jsy'
+
+export {hamt_init_shared} from './hamt_context.jsy'
+
+
+export async function hamt_new(stg, opt) ::
+  return hamt_new_ln2(4, stg, opt)
+
+export async function hamt_new_ln2(n_bits, stg, opt) ::
+  const hamt_ctx = new HAMTContext(stg, opt)
+  return bind_hamt_root(hamt_ctx) @
+    await hamt_ctx.create(Array(1 << n_bits), 0)
+
+export async function hamt_load(k21pair, stg, opt) ::
+  const hamt_ctx = new HAMTContext(stg, opt)
+  return bind_hamt_root(hamt_ctx) @
+    await hamt_ctx.create_load(k21pair)
+

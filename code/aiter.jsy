@@ -1,0 +1,35 @@
+import {is_trie_leaf, is_trie_node} from './_trie_node.jsy'
+
+
+export async function * hamt_aiter_node_entries(trie, on_missing) ::
+  const {hamt_ctx} = trie
+  const q = [trie], missing = []
+  while 0 !== q.length ::
+    const tip = await q.pop(), {slots} = tip
+    if undefined !== slots ::
+      for const ref of slots ::
+        if is_trie_node(ref) ::
+          q.push(hamt_ctx.load(ref, ref))
+
+      yield tip
+
+    else if undefined !== on_missing ::
+      on_missing(tip)
+
+    else missing.push(tip)
+
+  if 0 !== missing.length ::
+    const err = new Error('Trie async iteration missing nodes')
+    err.missing = missing
+    throw err
+
+
+export async function * hamt_aiter_nodes(trie, on_missing) ::
+  for await let {slots} of hamt_aiter_node_entries(trie, on_missing) ::
+    yield slots.filter(is_trie_node)
+
+
+export async function * hamt_aiter_leaves(trie, on_missing) ::
+  for await let {slots} of hamt_aiter_node_entries(trie, on_missing) ::
+    yield slots.filter(is_trie_leaf)
+

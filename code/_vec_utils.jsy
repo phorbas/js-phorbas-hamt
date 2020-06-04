@@ -1,0 +1,11 @@
+export function vec_equal(va, vb) ::
+  const len = va.length
+  if len !== vb.length ::
+    return false
+
+  for let i=0; i<len; i++ ::
+    if va[i] !== vb[i] ::
+      return false
+  return true
+
+

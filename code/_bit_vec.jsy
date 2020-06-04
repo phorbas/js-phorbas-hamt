@@ -1,0 +1,35 @@
+
+const _slot_bits = Array.from(Array(9), (_,i) => 1 << i)
+
+const _bind_hk_single = (mask, i, s8) =>
+  u8 => undefined !== u8[i] && @
+    mask & @ u8[i] >>> s8
+
+const _bind_hk_split = (mask, i0, i1, s16) =>
+  u8 => undefined !== u8[i0] && @
+    mask & @ ((u8[i0]<<8) | u8[i1]) >>> s16
+
+export function bind_hamt_hashkey(offset, n_slots) ::
+  const bit_w = _slot_bits.indexOf(n_slots)
+  const bit_o = offset * bit_w
+  const mask = (1 << bit_w) - 1
+  const i = bit_o >>> 3      // bit_o / 8
+  const bi = 8 - bit_w - (bit_o & 7) // bit_o % 8, most significant bits first
+  return bi >= 0
+    ? _bind_hk_single @ mask, i, bi
+    : _bind_hk_split @ mask, i, i+1, 8 + bi
+
+
+const _hkm_slots_offset = new Map()
+export function bound_hamt_hashkey(offset, n_slots) ::
+  let map_slots = _hkm_slots_offset.get(n_slots)
+  if undefined === map_slots ::
+    _hkm_slots_offset.set @
+      n_slots, map_slots = new Map()
+
+  let hk_fn = map_slots.get(offset)
+  if undefined === hk_fn ::
+    hk_fn = bind_hamt_hashkey(offset, n_slots)
+    map_slots.set(offset, hk_fn)
+  return hk_fn
+

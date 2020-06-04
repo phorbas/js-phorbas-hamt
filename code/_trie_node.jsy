@@ -1,0 +1,54 @@
+import {bound_hamt_hashkey} from './_bit_vec.jsy'
+import {hamt_trie_union} from './_alg_trie_union.jsy'
+
+export const is_trie_node = e => undefined !== e && undefined !== e[1]
+export const is_trie_leaf = e => undefined !== e && undefined === e[1]
+export const is_trie_empty = e => e === undefined
+
+export class HAMTTrieNode ::
+  static with_hamt_ctx(hamt_ctx) ::
+    class HAMTTrieNode_ extends this ::
+
+    const p = HAMTTrieNode_.prototype
+    p.hamt_ctx = hamt_ctx
+    p._root_ = p
+    return HAMTTrieNode_
+
+  constructor(slots, offset, opaque_key) ::
+    this.slots = slots
+    this.offset = offset
+    this.hk_offset = bound_hamt_hashkey(offset, slots.length)
+    this.opaque_key = opaque_key
+
+  k21pair() :: return this.opaque_key.k21pair()
+
+  create_child() ::
+    const {slots, offset} = this
+    return this.hamt_ctx.create(new Array(slots.length), 1+offset)
+
+  load_trie(h21pair) ::
+    return this.hamt_ctx.load(k21pair)
+
+  async create_peer(slots) ::
+    const {hamt_ctx, offset} = this
+    return hamt_ctx.create(slots, offset)
+
+  async store() ::
+    let {opaque_key} = this
+    if undefined !== opaque_key ::
+      return 1
+
+    const {slots, offset, hamt_ctx} = this
+    this.opaque_key = opaque_key =
+      await hamt_ctx.store(slots, offset)
+    return true
+
+
+  async union(iterable) ::
+    const new_trie = await hamt_trie_union(this, iterable)
+    await new_trie.store()
+    return new_trie
+
+  async merge_trie(k21pair) ::
+    throw new Error("TODO")
+

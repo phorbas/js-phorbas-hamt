@@ -1,0 +1,39 @@
+import {hamt_aiter_node_entries, hamt_aiter_nodes, hamt_aiter_leaves} from './aiter.jsy'
+
+import {hamt_sync_batch} from './sync.jsy'
+
+export function bind_hamt_root(hamt_ctx) ::
+  const _wm_trie = new WeakMap()
+  const wm_trie = _wm_trie.get.bind(_wm_trie)
+
+  const root_api = @{}
+    async union(iterable) ::
+      const new_trie = await wm_trie(this).union(iterable)
+      return hamt_root(new_trie)
+
+    async merge(k21pair) ::
+      const new_trie = await wm_trie(this).merge_trie(k21pair)
+      return hamt_root(new_trie)
+
+    aiter_node_entries(on_missing) ::
+      return hamt_aiter_node_entries(wm_trie(this), on_missing)
+    aiter_nodes(on_missing) ::
+      return hamt_aiter_nodes(wm_trie(this), on_missing)
+    aiter_leaves(on_missing) ::
+      return hamt_aiter_leaves(wm_trie(this), on_missing)
+
+    sync_push(stg_destination, opt) ::
+      return hamt_sync_batch @ wm_trie(this),
+        hamt_ctx.stg, stg_destination, opt
+    sync_pull(stg_source, opt) ::
+      return hamt_sync_batch @ wm_trie(this),
+        stg_source, hamt_ctx.stg, opt
+
+  return hamt_root
+
+  function hamt_root(trie) ::
+    if null != trie ::
+      const root = @{} __proto__: root_api
+      _wm_trie.set(root, trie)
+      return root
+

@@ -1,0 +1,29 @@
+import {hamt_new, hamt_load} from '@phorbas/hamt'
+import {assert, store_text_lines, load_text_lines, phorbas_test_ctx} from './_utils.jsy'
+import {poem_lines} from './poem.jsy'
+
+describe @ 'hamt poem', @::
+  it @ 'hamt sync roundtrip', @::>
+    const stg_src = await phorbas_test_ctx()
+    const sync = new Set()
+
+    const k21 = await store_text_lines(poem_lines, sync, stg_src)
+
+    let hamt = await hamt_new(stg_src)
+    hamt = await hamt.union(sync)
+
+    const stg_dst = await phorbas_test_ctx()
+    :: // prove it DOES NOT work without sync
+      assert.equal @
+        await load_text_lines(k21, stg_dst)
+        undefined
+
+    :: // sync everything in the set
+      await hamt.sync_push(stg_dst)
+
+    :: // prove it DOES work after sync
+      const rt_lines = await Promise.all @
+        await load_text_lines(k21, stg_dst)
+
+      assert.deepEqual(rt_lines, poem_lines)
+

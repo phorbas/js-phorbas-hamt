@@ -1,0 +1,18 @@
+import {is_trie_leaf, is_trie_node} from './_trie_node.jsy'
+import {hamt_aiter_node_entries} from './aiter.jsy'
+
+const _bkc_k2loc = e => e[0]
+const _bkc_not_exists = e => !e[1]
+
+export async function hamt_sync_batch(trie, stg_source, stg_destination, opt={}) ::
+  const fn_filter = opt.only_nodes ? is_trie_node
+    : opt.only_leaves ? is_trie_leaf : Boolean
+
+  for await let {slots} of hamt_aiter_node_entries(trie) ::
+    const refs_all = slots.filter(fn_filter).map(_bkc_k2loc)
+
+    const existing = await stg_destination.bkc_exists(refs_all)
+    const refs_needed = existing.filter(_bkc_not_exists).map(_bkc_k2loc)
+    const batch = await stg_source.bkc_fetch(refs_needed)
+    const problems = await stg_destination.bkc_store(batch)
+
