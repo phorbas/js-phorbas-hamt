@@ -9,8 +9,7 @@
   },
   "devDependencies": {
     "cbor-codec": "^0.2.3",
-    "qsrv": "^0.1.7",
-    "u8-utils": "^0.3.7"
+    "qsrv": "^0.1.7"
   },
   "scripts": {
     "prebuild": "test -d ./node_modules || npm -s install",
