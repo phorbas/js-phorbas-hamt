@@ -1,29 +1,80 @@
-import {hamt_new, hamt_load} from '@phorbas/hamt'
-import {assert, store_text_lines, load_text_lines, phorbas_test_ctx} from './_utils.jsy'
-import {poem_lines} from './poem.jsy'
+import {hamt_new_ln2, hamt_load} from '@phorbas/hamt'
 
-describe @ 'hamt poem', @::
-  it @ 'hamt sync roundtrip', @::>
-    const stg_src = await phorbas_test_ctx()
-    const sync = new Set()
+import {assert, phorbas_test_ctx} from './_utils.jsy'
+import {store_text_lines, load_text_lines} from './_utils.jsy'
 
-    const k21 = await store_text_lines(poem_lines, sync, stg_src)
+import {poem_lines} from './poem.mjs'
 
-    let hamt = await hamt_new(stg_src)
-    hamt = await hamt.union(sync)
 
-    const stg_dst = await phorbas_test_ctx()
-    :: // prove it DOES NOT work without sync
-      assert.equal @
-        await load_text_lines(k21, stg_dst)
-        undefined
+describe @ 'poem', @::
+  for let n_hamt_bits of [8,7,6,5,4,3,2,1] ::
+    const hamt_new = (...args) =>
+      hamt_new_ln2(n_hamt_bits, ...args)
 
-    :: // sync everything in the set
-      await hamt.sync_push(stg_dst)
+    describe @ `${1 << n_hamt_bits} slot hamt nodes`, @::
 
-    :: // prove it DOES work after sync
-      const rt_lines = await Promise.all @
-        await load_text_lines(k21, stg_dst)
+      it @ 'hamt set sync roundtrip', @::>
+        const stg_src = await phorbas_test_ctx()
+        const sync = new Set()
 
-      assert.deepEqual(rt_lines, poem_lines)
+        const ref_poem = await store_text_lines(poem_lines, sync, stg_src)
+
+        let hamt_root = await hamt_new(stg_src).union(sync)
+
+        await validate_poem(ref_poem, stg_src)
+
+        await sync_and_validate_poem(ref_poem, hamt_root)
+
+
+      it @ 'hamt sync multi_union roundtrip', @::>
+        const stg_src = await phorbas_test_ctx()
+        let hp = hamt_new(stg_src).multi_union()
+
+        const ref_poem = await store_text_lines(poem_lines, hp.fork(), stg_src)
+
+        let hamt_root = await hp.union_all()
+
+        await validate_poem(ref_poem, stg_src)
+
+        await sync_and_validate_poem(ref_poem, hamt_root)
+
+
+      it @ 'hamt dead ref sync multi_union roundtrip', @::>
+        const stg_src = await phorbas_test_ctx()
+        let hp = hamt_new(stg_src).multi_union()
+
+        const ref_poem = await store_text_lines(poem_lines, hp.fork(), stg_src)
+
+        let hamt_ref = await hp.union_all(true)
+
+        await validate_poem(ref_poem, stg_src)
+
+        let hamt_root = await hamt_load(hamt_ref, stg_src)
+        await sync_and_validate_poem(ref_poem, hamt_root)
+
+
+
+async function sync_and_validate_poem(ref_poem, hamt_root) ::
+  const stg_dst = await phorbas_test_ctx()
+
+  // prove it DOES NOT work without sync
+  await validate_poem_absent(ref_poem, stg_dst)
+  // sync everything in the set
+  await hamt_root.sync_push(stg_dst)
+  // prove it DOES work after sync
+  await validate_poem(ref_poem, stg_dst)
+
+
+async function validate_poem_absent(ref_poem, stg_dst) ::
+  const poem = await load_text_lines(ref_poem, stg_dst)
+  assert.equal(poem, undefined)
+
+
+async function validate_poem(ref_poem, stg_dst) ::
+  const poem = await load_text_lines(ref_poem, stg_dst)
+  assert.notEqual(poem, undefined)
+
+  const rt_lines = await Promise.all(poem)
+  for let i in rt_lines ::
+    assert.equal @ rt_lines[i], poem_lines[i], `poem line ${i}`
 

@@ -1,0 +1,142 @@
+import {hamt_new_ln2, hamt_load_merged} from '@phorbas/hamt'
+
+import {assert, phorbas_test_ctx} from './_utils.jsy'
+import {store_text, load_text} from './_utils.jsy'
+
+import {leonardo_quotes} from './leonardo_quotes.mjs'
+
+
+describe @ 'leonardo quotes', @::
+  for let n_hamt_bits of [8,7,6,5,4,3,2,1] ::
+    const hamt_new = (...args) =>
+      hamt_new_ln2(n_hamt_bits, ...args)
+
+    describe @ `${1 << n_hamt_bits} slot hamt nodes`, @::
+
+      it @ 'hamt multi_union', @::>
+        const stg = await phorbas_test_ctx()
+        let hamt_root = hamt_new(stg)
+        let hp = hamt_root.multi_union()
+
+        let refs = 
+          leonardo_quotes.map @ quote =>
+            store_text(quote, hp.fork(), stg)
+
+        hamt_root = await hp.union_all()
+        refs = await Promise.all(refs)
+
+        await validate_leonardo_quotes(refs, stg)
+
+
+      it @ 'hamt sync multi_union', @::>
+        const stg_src = await phorbas_test_ctx()
+        let hamt_root = hamt_new(stg_src)
+        let hp = hamt_root.multi_union()
+
+        let refs = 
+          leonardo_quotes.map @ quote =>
+            store_text(quote, hp.fork(), stg_src)
+
+        hamt_root = await hp.union_all()
+        refs = await Promise.all(refs)
+
+        await validate_leonardo_quotes(refs, stg_src)
+
+        await sync_and_validate_leonardo_quotes(refs, hamt_root)
+
+
+      it @ 'hamt multi_union split', @::>
+        const stg = await phorbas_test_ctx()
+        let hamt_root = hamt_new(stg)
+
+        let refs = []
+
+        for const [slice_start, slice_end] of [ [0, -10], [-10] ] ::
+          let hp = hamt_root.multi_union()
+
+          refs = refs.concat @
+            leonardo_quotes.slice(slice_start, slice_end)
+              .map @ quote => store_text(quote, hp.fork(), stg)
+
+          hamt_root = await hp.union_all()
+
+        refs = await Promise.all(refs)
+
+        await validate_leonardo_quotes(refs, stg)
+
+
+      it @ 'hamt sync multi_union split', @::>
+        const stg_src = await phorbas_test_ctx()
+        let hamt_root = hamt_new(stg_src)
+
+        let refs = []
+
+        for const [slice_start, slice_end] of [ [0, -10], [-10] ] ::
+          let hp = hamt_root.multi_union()
+
+          refs = refs.concat @
+            leonardo_quotes.slice(slice_start, slice_end)
+              .map @ quote => store_text(quote, hp.fork(), stg_src)
+
+          hamt_root = await hp.union_all()
+
+        refs = await Promise.all(refs)
+
+        await validate_leonardo_quotes(refs, stg_src)
+
+        await sync_and_validate_leonardo_quotes(refs, hamt_root)
+
+
+      it @ 'hamt sync multi_union merge', @::>
+        const stg_src = await phorbas_test_ctx()
+        let hamt_branches = []
+
+        let refs = []
+
+        for const [slice_start, slice_end] of [ [0, -10], [-10] ] ::
+          let hp = hamt_new(stg_src).multi_union()
+
+          refs = refs.concat @
+            leonardo_quotes.slice(slice_start, slice_end)
+              .map @ quote => store_text(quote, hp.fork(), stg_src)
+
+          hamt_branches.push @
+            await hp.union_all(true)
+
+        refs = await Promise.all(refs)
+
+        await validate_leonardo_quotes(refs, stg_src)
+
+        const hamt_root = await hamt_load_merged(hamt_branches, stg_src)
+        await sync_and_validate_leonardo_quotes(refs, hamt_root)
+
+
+
+async function sync_and_validate_leonardo_quotes(refs_quotes, hamt_root) ::
+  const stg_dst = await phorbas_test_ctx()
+
+  // prove it DOES NOT work without sync
+  await validate_leonardo_quotes_absent(refs_quotes, stg_dst)
+  // sync everything in the set
+  await hamt_root.sync_push(stg_dst)
+  // prove it DOES work after sync
+  await validate_leonardo_quotes(refs_quotes, stg_dst)
+
+
+async function validate_leonardo_quotes_absent(refs_quotes, stg_dst) ::
+  const rt_quotes = await Promise.all @
+    refs_quotes.map @ r =>
+      load_text(r, stg_dst)
+
+  for let i in rt_quotes ::
+    assert.equal @ rt_quotes[i], undefined, `quote ${i}`
+
+
+async function validate_leonardo_quotes(refs_quotes, stg_dst) ::
+  const rt_quotes = await Promise.all @
+    refs_quotes.map @ r =>
+      load_text(r, stg_dst)
+
+  for let i in rt_quotes ::
+    assert.equal @ rt_quotes[i], leonardo_quotes[i], `quote ${i}`
+

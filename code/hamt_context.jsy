@@ -23,9 +23,6 @@ export class HAMTContext ::
   create(slots, offset) ::
     return new this._TrieNode(slots, offset)
 
-  async create_load(k21pair) ::
-    return await this.load(k21pair)
-
   async load(k21pair, absent) ::
     const {stg, decode} = this
     const k = await stg.opaque.from_k21pair(k21pair)

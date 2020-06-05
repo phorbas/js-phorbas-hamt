@@ -1,5 +1,5 @@
 import {assert, expect, cbor_encode, cbor_decode, phorbas_test_ctx, store_text_lines, load_text_lines} from './_utils.jsy'
-import {poem_lines} from './poem.jsy'
+import {poem_lines} from './poem.mjs'
 
 describe @ 'smoke', @::
   it @ 'basics', @::

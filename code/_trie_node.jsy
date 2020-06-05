@@ -1,5 +1,5 @@
 import {bound_hamt_hashkey} from './_bit_vec.jsy'
-import {hamt_trie_union} from './_alg_trie_union.jsy'
+import {hamt_trie_union_op} from './_alg_trie_union.jsy'
 
 export const is_trie_node = e => undefined !== e && undefined !== e[1]
 export const is_trie_leaf = e => undefined !== e && undefined === e[1]
@@ -26,7 +26,7 @@ export class HAMTTrieNode ::
     const {slots, offset} = this
     return this.hamt_ctx.create(new Array(slots.length), 1+offset)
 
-  load_trie(h21pair) ::
+  async load_trie(k21pair) ::
     return this.hamt_ctx.load(k21pair)
 
   async create_peer(slots) ::
@@ -44,11 +44,43 @@ export class HAMTTrieNode ::
     return true
 
 
-  async union(iterable) ::
-    const new_trie = await hamt_trie_union(this, iterable)
+  merge_onto(op_union) ::
+    const {slots} = this
+    for const hk in slots ::
+      const ref = slots[hk]
+      if undefined !== ref ::
+        if undefined !== ref[1] ::
+          op_union.add_node(hk, ref)
+        else op_union.add(ref[0])
+
+  async merge_siblings(op_union, trie_siblings) ::
+    for let trie of trie_siblings ::
+      if ! trie :: continue
+
+      if ! trie.merge_onto ::
+        trie = await this.load_trie(trie)
+        if ! trie ::
+          throw new Error('Trie not found')
+
+      trie.merge_onto(op_union)
+
+    return op_union
+
+  async multi_union(iterable, trie_siblings) ::
+    const op_union = hamt_trie_union_op(this)
+    for const k2loc of iterable ::
+      op_union.add(k2loc)
+
+    return trie_siblings
+      ? this.merge_siblings(op_union, trie_siblings)
+      : op_union
+
+
+  async union(iterable, trie_siblings) ::
+    const op_union = await this.multi_union @
+      iterable, trie_siblings
+
+    const new_trie = await op_union.union_all()
     await new_trie.store()
     return new_trie
-
-  async merge_trie(k21pair) ::
-    throw new Error("TODO")
 

@@ -1,31 +1,56 @@
-import {vec_equal} from './_vec_utils.jsy'
+import {asy_join, vec_equal} from './_utils.jsy'
 
-export async function hamt_trie_union(trie, iterable) ::
+
+export function hamt_trie_union_op(trie, hamt_root) ::
   let {slots, hk_offset} = trie
-  slots = slots.slice()
+  let _ops = [], _pq = []
 
-  let ops = []
+  return @{} add, add_node,
 
-  // construct union ops
-  for const k2loc of iterable ::
+    fork() ::
+      let res
+      _pq.push @ new Promise @\ done ::
+        res = {add, done}
+      return res
+
+    async union_all(as_ref) ::
+      // join on forked operations
+      const _o_pq = _pq
+      _pq = false
+      await asy_join(_o_pq)
+
+      // scatter union ops in parallel
+      const new_slots = slots.slice()
+      const _o_fin = []
+      for let hk in _ops ::
+        _o_fin[hk] = _ops[hk].fin(hk, new_slots, trie)
+      _ops = false
+
+      // gather parallel union ops 
+      await asy_join(_o_fin)
+
+      // new unioned trie complete
+      const new_trie = await trie.create_peer(new_slots)
+      await new_trie.store()
+      return as_ref ? new_trie.k21pair()
+        : hamt_root ? hamt_root(new_trie) : new_trie
+
+  function add(k2loc) ::
     const hk = hk_offset(k2loc)
     if null != hk ::
-      ops[hk] = (ops[hk] || _hamt_slot_union(slots[hk])).add(k2loc)
+      const hk_op = _ops[hk] || _hamt_slot_union(slots[hk])
+      _ops[hk] = hk_op.add(k2loc)
 
-  // scatter union ops in parallel
-  for let hk in ops ::
-    ops[hk] = ops[hk].fin(hk, slots, trie)
-
-  // gather parallel union ops 
-  while 0 !== ops.length :: await ops.pop()
-
-  // new unioned trie complete
-  return await trie.create_peer(slots)
+  function add_node(hk, ref) ::
+    if null != hk ::
+      const hk_op = _ops[hk] || _hamt_slot_union(slots[hk])
+      _ops[hk] = hk_op.add_node(ref)
 
 
 
 const _slot_empty = @{}
-  add: (k2loc) => _slot_leaf.create(k2loc)
+  add: k2loc => _slot_leaf.create(k2loc)
+  add_node: ref => _slot_merge.create(ref, [])
   fin() :: // noop
 
 
@@ -37,6 +62,9 @@ const _slot_leaf = @{}
     const {v} = this
     return vec_equal(v, k2loc) ? this
       : _slot_union.create([v, k2loc])
+
+  add_node(ref) ::
+    return _slot_merge.create(ref, [this.v])
 
   fin(hk, slots) ::
     slots[hk] = [this.v]
@@ -50,6 +78,9 @@ const _slot_union = @{}
     this.lst.push(k2loc)
     return this
 
+  add_node(ref) ::
+    return _slot_merge.create(ref, this.lst)
+
   async fin(hk, slots, trie) ::
     let child = trie.create_child()
     child = await child.union(this.lst)
@@ -57,17 +88,22 @@ const _slot_union = @{}
 
 
 const _slot_merge = @{}
-  create(ref) ::
-    return @{} __proto__: this, ref, lst: []
+  create(ref, lst) ::
+    return @{} __proto__: this, ref, lst
 
   add(k2loc) ::
     this.lst.push(k2loc)
     return this
 
+  add_node(ref) ::
+    this.sib = [ref, ... this.sib || []]
+    return this
+
   async fin(hk, slots, trie) ::
-    const child = await trie.load_trie(this.ref)
-    child = await child.union(this.lst)
-    slots[hk] = child.k21pair()
+    let {ref, lst, sib} = this
+    const child = await trie.load_trie(ref)
+    const new_child = await child.union(lst, sib)
+    slots[hk] = new_child.k21pair()
 
 
 function _hamt_slot_union(slot) ::
@@ -75,5 +111,5 @@ function _hamt_slot_union(slot) ::
     ? _slot_empty
     : undefined === slot[1]
       ? _slot_union.create([slot[0]])
-      : _slot_merge.create(slot)
+      : _slot_merge.create(slot, [])
 

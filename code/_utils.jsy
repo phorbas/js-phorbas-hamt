@@ -1,3 +1,9 @@
+
+export async function asy_join(pq) ::
+  while 0 !== pq.length ::
+    await pq.pop()
+
+
 export function vec_equal(va, vb) ::
   const len = va.length
   if len !== vb.length ::
@@ -7,5 +13,4 @@ export function vec_equal(va, vb) ::
     if va[i] !== vb[i] ::
       return false
   return true
-
 

@@ -1,4 +1,5 @@
 import {hamt_aiter_node_entries, hamt_aiter_nodes, hamt_aiter_leaves} from './aiter.jsy'
+import {hamt_trie_union_op} from './_alg_trie_union.jsy'
 
 import {hamt_sync_batch} from './sync.jsy'
 
@@ -7,13 +8,19 @@ export function bind_hamt_root(hamt_ctx) ::
   const wm_trie = _wm_trie.get.bind(_wm_trie)
 
   const root_api = @{}
+    async merge(trie_iterable) ::
+      const new_trie = await wm_trie(this).union([], trie_iterable)
+      return hamt_root(new_trie)
+
     async union(iterable) ::
       const new_trie = await wm_trie(this).union(iterable)
       return hamt_root(new_trie)
 
-    async merge(k21pair) ::
-      const new_trie = await wm_trie(this).merge_trie(k21pair)
-      return hamt_root(new_trie)
+    multi_union() ::
+      return hamt_trie_union_op(wm_trie(this), hamt_root)
+
+    parallel() ::
+      return hamt_parallel_sync(wm_trie(this), hamt_root)
 
     aiter_node_entries(on_missing) ::
       return hamt_aiter_node_entries(wm_trie(this), on_missing)
