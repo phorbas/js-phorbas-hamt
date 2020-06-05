@@ -101,7 +101,7 @@ const _slot_merge = @{}
 
   async fin(hk, slots, trie) ::
     let {ref, lst, sib} = this
-    const child = await trie.load_trie(ref)
+    const child = await trie.load_child(ref)
     const new_child = await child.union(lst, sib)
     slots[hk] = new_child.k21pair()
 

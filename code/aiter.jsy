@@ -2,14 +2,13 @@ import {is_trie_leaf, is_trie_node} from './_trie_node.jsy'
 
 
 export async function * hamt_aiter_node_entries(trie, on_missing) ::
-  const {hamt_ctx} = trie
   const q = [trie], missing = []
   while 0 !== q.length ::
     const tip = await q.pop(), {slots} = tip
     if undefined !== slots ::
       for const ref of slots ::
         if is_trie_node(ref) ::
-          q.push(hamt_ctx.load(ref, ref))
+          q.push(tip.load_child(ref, ref))
 
       yield tip
 

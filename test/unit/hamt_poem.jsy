@@ -5,9 +5,11 @@ import {store_text_lines, load_text_lines} from './_utils.jsy'
 
 import {poem_lines} from './poem.mjs'
 
+const hamt_test_bits = [8,7,6,5,4,3,2,1]
+//const hamt_test_bits = [6, 4]
 
 describe @ 'poem', @::
-  for let n_hamt_bits of [8,7,6,5,4,3,2,1] ::
+  for let n_hamt_bits of hamt_test_bits ::
     const hamt_new = (...args) =>
       hamt_new_ln2(n_hamt_bits, ...args)
 

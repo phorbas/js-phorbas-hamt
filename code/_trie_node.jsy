@@ -26,8 +26,24 @@ export class HAMTTrieNode ::
     const {slots, offset} = this
     return this.hamt_ctx.create(new Array(slots.length), 1+offset)
 
-  async load_trie(k21pair) ::
-    return this.hamt_ctx.load(k21pair)
+  verify_shape(delta) ::
+    let {slots, offset} = this
+    return trie => ::
+      if slots.length !== trie.slots.length ::
+        throw new Error('Trie slot shape mismatch')
+      if delta + offset !== trie.offset ::
+        throw new Error('Trie offset mismatch')
+      return trie
+
+  async load_child(ref, absent) ::
+    const child = await this.hamt_ctx.load(ref, absent)
+    return child === absent ? absent :
+      this.verify_shape(1)(child)
+
+  async load_peer(ref, absent) ::
+    const sib = await this.hamt_ctx.load(ref, absent)
+    return sib === absent ? absent :
+      this.verify_shape(0)(sib)
 
   async create_peer(slots) ::
     const {hamt_ctx, offset} = this
@@ -54,15 +70,15 @@ export class HAMTTrieNode ::
         else op_union.add(ref[0])
 
   async merge_siblings(op_union, trie_siblings) ::
-    for let trie of trie_siblings ::
-      if ! trie :: continue
+    for let sib of trie_siblings ::
+      if ! sib :: continue
 
-      if ! trie.merge_onto ::
-        trie = await this.load_trie(trie)
-        if ! trie ::
+      if ! sib.merge_onto ::
+        sib = await this.load_peer(sib)
+        if ! sib ::
           throw new Error('Trie not found')
 
-      trie.merge_onto(op_union)
+      sib.merge_onto(op_union)
 
     return op_union
 

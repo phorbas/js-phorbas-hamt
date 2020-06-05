@@ -12,11 +12,12 @@
     "qsrv": "^0.1.7"
   },
   "scripts": {
+    "serve": "qsrv -f unittest.html -- __unittest.iife.js",
+    "start": "npm -s run serve",
     "prebuild": "test -d ./node_modules || npm -s install",
     "build": "../node_modules/.bin/rollup --config",
     "clean": "rm ./__unittest.*",
     "watch": "npm -s run build -- --watch",
-    "serve": "qsrv --fallback unittest.html -- __unittest.iife.js",
     "pretest": "npm -s run build",
     "test": "npm -s run test:one",
     "test:one": "NODE_OPTIONS=--enable-source-maps  mocha ./__unittest.cjs.js",
