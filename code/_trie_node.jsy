@@ -3,7 +3,6 @@ import {hamt_trie_union_op} from './_alg_trie_union.jsy'
 
 export const is_trie_node = e => undefined !== e && undefined !== e[1]
 export const is_trie_leaf = e => undefined !== e && undefined === e[1]
-export const is_trie_empty = e => e === undefined
 
 export class HAMTTrieNode ::
   static with_hamt_ctx(hamt_ctx) ::

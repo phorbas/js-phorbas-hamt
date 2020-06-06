@@ -96,14 +96,21 @@ const _slot_merge = @{}
     return this
 
   add_node(ref) ::
-    this.sib = [ref, ... this.sib || []]
+    (this.sib || (this.sib=[]))
+      .push(ref)
     return this
 
   async fin(hk, slots, trie) ::
     let {ref, lst, sib} = this
-    const child = await trie.load_child(ref)
-    const new_child = await child.union(lst, sib)
-    slots[hk] = new_child.k21pair()
+    if 0 === lst.length && undefined === sib ::
+      // no-change
+      slots[hk] = Array.isArray(ref) ? ref :
+        await trie.hamt_ctx.as_h21pair(ref)
+
+    else ::
+      const child = await trie.load_child(ref)
+      const new_child = await child.union(lst, sib)
+      slots[hk] = new_child.k21pair()
 
 
 function _hamt_slot_union(slot) ::
