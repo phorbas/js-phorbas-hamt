@@ -34,7 +34,7 @@ export class HAMTContext ::
     let [[_, ans]] = await stg.bkc_fetch([k.k2loc])
     if ! ans :: return absent
 
-    ans = await k.decipher(ans)
+    ans = await k.decode_content(ans)
     if ! ans :: return absent
 
     ans = await decode(ans)
@@ -53,12 +53,12 @@ export class HAMTContext ::
   async store(slots, offset) ::
     const opaque_key = await this.opaque_key(slots, offset)
 
-    const u8 = await opaque_key.encipher(opaque_key.u8)
+    const u8 = await opaque_key.encode_content(opaque_key.u8)
     await this.stg.bkc_store([[opaque_key.k2loc, u8]])
     return opaque_key
 
 
-export function hamt_init_shared(codec) ::
+export function init_hamt_shared_codec(codec) ::
   HAMTContext.prototype.init_codec(codec)
 
 

@@ -1,6 +1,6 @@
-import {hamt_new_ln2, hamt_load} from '@phorbas/hamt'
+import {hamt_new, hamt_new_ln2, hamt_load} from '@phorbas/hamt'
 
-import {assert, phorbas_test_ctx} from './_utils.jsy'
+import {assert, all_phorbas_test_ctx} from './_utils.jsy'
 import {store_text_lines, load_text_lines} from './_utils.jsy'
 
 import {poem_lines} from './poem.mjs'
@@ -9,28 +9,39 @@ const hamt_test_bits = [8,7,6,5,4,3,2,1]
 //const hamt_test_bits = [6, 4]
 
 describe @ 'poem', @::
+  for const [suite_name, phorbas_test_ctx] of Object.entries(all_phorbas_test_ctx) ::
+    describe @ suite_name,
+      hamt_poem_suite @
+        hamt_new, phorbas_test_ctx
+
   for let n_hamt_bits of hamt_test_bits ::
-    const hamt_new = (...args) =>
+    const _hamt_new_ = (...args) =>
       hamt_new_ln2(n_hamt_bits, ...args)
 
     describe @ `${1 << n_hamt_bits} slot hamt nodes`, @::
+      hamt_poem_suite @
+        _hamt_new_, all_phorbas_test_ctx.opaque_tahoe
 
+
+function hamt_poem_suite(_hamt_new_, phorbas_test_ctx) ::
+  return @::
       it @ 'hamt set sync roundtrip', @::>
         const stg_src = await phorbas_test_ctx()
         const sync = new Set()
 
         const ref_poem = await store_text_lines(poem_lines, sync, stg_src)
 
-        let hamt_root = await hamt_new(stg_src).union(sync)
+        let hamt_root = await _hamt_new_(stg_src).union(sync)
 
         await validate_poem(ref_poem, stg_src)
 
-        await sync_and_validate_poem(ref_poem, hamt_root)
+        await sync_and_validate_poem @
+          ref_poem, hamt_root, await phorbas_test_ctx()
 
 
       it @ 'hamt sync multi_union roundtrip', @::>
         const stg_src = await phorbas_test_ctx()
-        let hp = hamt_new(stg_src).multi_union()
+        let hp = _hamt_new_(stg_src).multi_union()
 
         const ref_poem = await store_text_lines(poem_lines, hp.fork(), stg_src)
 
@@ -38,12 +49,13 @@ describe @ 'poem', @::
 
         await validate_poem(ref_poem, stg_src)
 
-        await sync_and_validate_poem(ref_poem, hamt_root)
+        await sync_and_validate_poem @
+          ref_poem, hamt_root, await phorbas_test_ctx()
 
 
       it @ 'hamt dead ref sync multi_union roundtrip', @::>
         const stg_src = await phorbas_test_ctx()
-        let hp = hamt_new(stg_src).multi_union()
+        let hp = _hamt_new_(stg_src).multi_union()
 
         const ref_poem = await store_text_lines(poem_lines, hp.fork(), stg_src)
 
@@ -52,13 +64,12 @@ describe @ 'poem', @::
         await validate_poem(ref_poem, stg_src)
 
         let hamt_root = await hamt_load(hamt_ref, stg_src)
-        await sync_and_validate_poem(ref_poem, hamt_root)
+        await sync_and_validate_poem @
+          ref_poem, hamt_root, await phorbas_test_ctx()
 
 
 
-async function sync_and_validate_poem(ref_poem, hamt_root) ::
-  const stg_dst = await phorbas_test_ctx()
-
+async function sync_and_validate_poem(ref_poem, hamt_root, stg_dst) ::
   // prove it DOES NOT work without sync
   await validate_poem_absent(ref_poem, stg_dst)
   // sync everything in the set

@@ -1,6 +1,6 @@
-import {hamt_new_ln2, hamt_load_merged} from '@phorbas/hamt'
+import {hamt_new, hamt_new_ln2, hamt_load_merged} from '@phorbas/hamt'
 
-import {assert, phorbas_test_ctx} from './_utils.jsy'
+import {assert, all_phorbas_test_ctx} from './_utils.jsy'
 import {store_text, load_text} from './_utils.jsy'
 
 import {leonardo_quotes} from './leonardo_quotes.mjs'
@@ -9,15 +9,25 @@ const hamt_test_bits = [8,7,6,5,4,3,2,1]
 //const hamt_test_bits = [6, 4]
 
 describe @ 'leonardo quotes', @::
+  for const [suite_name, phorbas_test_ctx] of Object.entries(all_phorbas_test_ctx) ::
+    describe @ suite_name,
+      hamt_leonardo_quotes_suite @
+        hamt_new, phorbas_test_ctx
+
   for let n_hamt_bits of hamt_test_bits ::
-    const hamt_new = (...args) =>
+    const _hamt_new_ = (...args) =>
       hamt_new_ln2(n_hamt_bits, ...args)
 
-    describe @ `${1 << n_hamt_bits} slot hamt nodes`, @::
+    describe @ `${1 << n_hamt_bits} slot hamt nodes`,
+      hamt_leonardo_quotes_suite @
+        _hamt_new_, all_phorbas_test_ctx.opaque_tahoe
 
+
+function hamt_leonardo_quotes_suite(_hamt_new_, phorbas_test_ctx) ::
+  return @::
       it @ 'hamt multi_union', @::>
         const stg = await phorbas_test_ctx()
-        let hamt_root = hamt_new(stg)
+        let hamt_root = _hamt_new_(stg)
         let hp = hamt_root.multi_union()
 
         let refs = 
@@ -32,7 +42,7 @@ describe @ 'leonardo quotes', @::
 
       it @ 'hamt sync multi_union', @::>
         const stg_src = await phorbas_test_ctx()
-        let hamt_root = hamt_new(stg_src)
+        let hamt_root = _hamt_new_(stg_src)
         let hp = hamt_root.multi_union()
 
         let refs = 
@@ -44,12 +54,13 @@ describe @ 'leonardo quotes', @::
 
         await validate_leonardo_quotes(refs, stg_src)
 
-        await sync_and_validate_leonardo_quotes(refs, hamt_root)
+        await sync_and_validate_leonardo_quotes @
+          refs, hamt_root, await phorbas_test_ctx()
 
 
       it @ 'hamt multi_union split', @::>
         const stg = await phorbas_test_ctx()
-        let hamt_root = hamt_new(stg)
+        let hamt_root = _hamt_new_(stg)
 
         let refs = []
 
@@ -69,7 +80,7 @@ describe @ 'leonardo quotes', @::
 
       it @ 'hamt sync multi_union split', @::>
         const stg_src = await phorbas_test_ctx()
-        let hamt_root = hamt_new(stg_src)
+        let hamt_root = _hamt_new_(stg_src)
 
         let refs = []
 
@@ -86,7 +97,8 @@ describe @ 'leonardo quotes', @::
 
         await validate_leonardo_quotes(refs, stg_src)
 
-        await sync_and_validate_leonardo_quotes(refs, hamt_root)
+        await sync_and_validate_leonardo_quotes @
+          refs, hamt_root, await phorbas_test_ctx()
 
 
       it @ 'hamt sync multi_union merge', @::>
@@ -96,7 +108,7 @@ describe @ 'leonardo quotes', @::
         let refs = []
 
         for const [slice_start, slice_end] of [ [0, -10], [-10] ] ::
-          let hp = hamt_new(stg_src).multi_union()
+          let hp = _hamt_new_(stg_src).multi_union()
 
           refs = refs.concat @
             leonardo_quotes.slice(slice_start, slice_end)
@@ -110,13 +122,12 @@ describe @ 'leonardo quotes', @::
         await validate_leonardo_quotes(refs, stg_src)
 
         const hamt_root = await hamt_load_merged(hamt_branches, stg_src)
-        await sync_and_validate_leonardo_quotes(refs, hamt_root)
+        await sync_and_validate_leonardo_quotes @
+          refs, hamt_root, await phorbas_test_ctx()
 
 
 
-async function sync_and_validate_leonardo_quotes(refs_quotes, hamt_root) ::
-  const stg_dst = await phorbas_test_ctx()
-
+async function sync_and_validate_leonardo_quotes(refs_quotes, hamt_root, stg_dst) ::
   // prove it DOES NOT work without sync
   await validate_leonardo_quotes_absent(refs_quotes, stg_dst)
   // sync everything in the set

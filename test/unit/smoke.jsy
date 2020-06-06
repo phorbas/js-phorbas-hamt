@@ -1,10 +1,18 @@
-import {assert, expect, cbor_encode, cbor_decode, phorbas_test_ctx, store_text_lines, load_text_lines} from './_utils.jsy'
+import {assert, all_phorbas_test_ctx} from './_utils.jsy'
+import {store_text_lines, load_text_lines} from './_utils.jsy'
 import {poem_lines} from './poem.mjs'
 
 describe @ 'smoke', @::
   it @ 'basics', @::
     assert @ 'works'
 
+  for const [suite_name, phorbas_test_ctx] of Object.entries(all_phorbas_test_ctx) ::
+    describe @ suite_name,
+      smoke_suite @
+        phorbas_test_ctx
+
+
+function smoke_suite(phorbas_test_ctx) :: return @::
   it @ 'single store roundtrip', @::>
     const sync = new Set()
     const stg = await phorbas_test_ctx()

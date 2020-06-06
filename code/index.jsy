@@ -1,7 +1,7 @@
 import {HAMTContext} from './hamt_context.jsy'
 import {bind_hamt_root} from './root_api.jsy'
 
-export {hamt_init_shared} from './hamt_context.jsy'
+export {init_hamt_shared_codec} from './hamt_context.jsy'
 
 
 export function hamt_new(stg, opt) ::
