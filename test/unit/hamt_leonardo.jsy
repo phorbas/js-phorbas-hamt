@@ -1,7 +1,6 @@
 import {hamt_new, hamt_new_ln2, hamt_load_merged} from '@phorbas/hamt'
 
 import {assert, all_phorbas_test_ctx} from './_utils.jsy'
-import {store_text, load_text} from './_utils.jsy'
 
 import {leonardo_quotes} from './leonardo_quotes.mjs'
 
@@ -9,6 +8,13 @@ const hamt_test_bits = [8,7,6,5,4,3,2,1]
 //const hamt_test_bits = [6, 4]
 
 describe @ 'leonardo quotes', @::
+  if 0 ::
+    hamt_leonardo_quotes_suite @
+      hamt_new, all_phorbas_test_ctx.opaque_basic
+      //hamt_new, all_phorbas_test_ctx.opaque_tahoe
+    ()
+    return
+
   for const [suite_name, phorbas_test_ctx] of Object.entries(all_phorbas_test_ctx) ::
     describe @ suite_name,
       hamt_leonardo_quotes_suite @
@@ -139,7 +145,7 @@ async function sync_and_validate_leonardo_quotes(refs_quotes, hamt_root, stg_dst
 async function validate_leonardo_quotes_absent(refs_quotes, stg_dst) ::
   const rt_quotes = await Promise.all @
     refs_quotes.map @ r =>
-      load_text(r, stg_dst)
+      stg_dst.fetch_utf8(r)
 
   for let i in rt_quotes ::
     assert.equal @ rt_quotes[i], undefined, `quote ${i}`
@@ -148,8 +154,14 @@ async function validate_leonardo_quotes_absent(refs_quotes, stg_dst) ::
 async function validate_leonardo_quotes(refs_quotes, stg_dst) ::
   const rt_quotes = await Promise.all @
     refs_quotes.map @ r =>
-      load_text(r, stg_dst)
+      stg_dst.fetch_utf8(r)
 
   for let i in rt_quotes ::
     assert.equal @ rt_quotes[i], leonardo_quotes[i], `quote ${i}`
+
+
+async function store_text(text, sync, stg) ::
+  const ref = await stg.with_sync(sync).store_utf8(text)
+  if sync.done :: sync.done()
+  return ref
 

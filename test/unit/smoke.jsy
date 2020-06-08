@@ -1,6 +1,6 @@
 import {assert, all_phorbas_test_ctx} from './_utils.jsy'
 import {store_text_lines, load_text_lines} from './_utils.jsy'
-import {poem_lines} from './poem.mjs'
+import {poem_text, poem_lines} from './poem.mjs'
 
 describe @ 'smoke', @::
   it @ 'basics', @::
@@ -46,4 +46,11 @@ function smoke_suite(phorbas_test_ctx) :: return @::
         await load_text_lines(k21, stg_dst)
 
       assert.deepEqual(rt_lines, poem_lines)
+
+  it @ 'store api', @::>
+    const stg = await phorbas_test_ctx()
+    const ref = await stg.store_utf8(poem_text)
+
+    const rt_poem_text = await stg.fetch_utf8(ref)
+    assert.equal(rt_poem_text, poem_text)
 
