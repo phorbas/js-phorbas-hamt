@@ -9,6 +9,11 @@ const hamt_test_bits = [8,7,6,5,4,3,2,1]
 //const hamt_test_bits = [6, 4]
 
 describe @ 'poem', @::
+  if 0 ::
+    return describe @ 'fast subset',
+      hamt_poem_suite @
+        hamt_new, all_phorbas_test_ctx.opaque_tahoe
+
   for const [suite_name, phorbas_test_ctx] of Object.entries(all_phorbas_test_ctx) ::
     describe @ suite_name,
       hamt_poem_suite @

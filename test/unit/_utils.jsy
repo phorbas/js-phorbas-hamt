@@ -40,50 +40,23 @@ export const phorbas_test_ctx = all_phorbas_test_ctx.opaque_tahoe
 
 
 export async function store_text_lines(text_lines, sync, stg) ::
-  text_lines = Array.from(text_lines)
+  stg = stg.with_sync(sync)
 
-  const refs = [], u8_pairs = []
-  const q = []
-  for let idx=0; idx<text_lines.length; idx++ ::
-    q.push @!>
-      const ln = text_lines[idx]
-      const k = await stg.opaque.from_content(ln)
-      refs[idx] = k.k21pair()
-      sync.add(k.k2loc)
-      u8_pairs.push @# k.k2loc, await k.encode_utf8(ln)
+  const refs = await Promise.all @
+    Array.from @ text_lines,
+      ln => stg.store_utf8(ln)
 
-  while q.length :: await q.pop()
-
-  const u8_refs = cbor_encode(refs)
-  const k_root = await stg.opaque.from_content(u8_refs)
-  u8_pairs.push @# k_root.k2loc, await k_root.encode_content(u8_refs)
-  sync.add(k_root.k2loc)
+  const root_ref = await stg.store_content(cbor_encode(refs))
 
   if sync.done :: sync.done()
-
-  await stg.bkc_store(u8_pairs)
-  return k_root.k21pair()
+  return root_ref
 
 
 export async function load_text_lines(root_ref, stg) ::
-  let refs
-  ::
-    const k = await stg.opaque.from_k21pair(root_ref)
+  const u8_refs = await stg.fetch_content(root_ref)
+  if ! u8_refs :: return
 
-    const [[, ans]] = await stg.bkc_fetch([k.k2loc])
-    if ! ans :: return
-
-    refs = cbor_decode @ await k.decode_content(ans)
-
-  const ref_map = new Map @
-    refs.map @ ea => @#
-      ea[0], stg.opaque.from_k21pair(ea)
-
-  const ref_content = await
-    stg.bkc_fetch @
-      refs.map(ea => ea[0])
-
-  return ref_content.map @\ [k2loc, u8_enc] ::>
-    const k = await ref_map.get(k2loc)
-    return await k.decode_utf8(u8_enc)
+  const refs = cbor_decode(u8_refs)
+  return refs.map @
+    ln_ref => stg.fetch_utf8(ln_ref)
 
