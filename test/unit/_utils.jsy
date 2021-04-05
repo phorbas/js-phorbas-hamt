@@ -4,7 +4,7 @@ import @{}
   init_opaque_shared_codec
   opaque_basic
   opaque_tahoe
-  opaque_ecdsa
+  opaque_ecdsa_basic
   opaque_ecdsa_tahoe
 
 #IF PLAT_WEB
@@ -33,7 +33,7 @@ function bind_phorbas_test_ctx(opaque) ::
 export const all_phorbas_test_ctx = @{}
   opaque_basic: bind_phorbas_test_ctx(opaque_basic)
   opaque_tahoe: bind_phorbas_test_ctx(opaque_tahoe)
-  opaque_ecdsa: bind_phorbas_test_ctx(opaque_ecdsa)
+  opaque_ecdsa_basic: bind_phorbas_test_ctx(opaque_ecdsa_basic)
   opaque_ecdsa_tahoe: bind_phorbas_test_ctx(opaque_ecdsa_tahoe)
 
 export const phorbas_test_ctx = all_phorbas_test_ctx.opaque_tahoe
