@@ -1,6 +1,6 @@
 # PHORBAS HAMT
 
-PHORBASE HAMT is inspired by CouchDB's syncing, CRDTs, and immutable CAS.
+PHORBAS HAMT is inspired by CouchDB's syncing, CRDTs, and immutable CAS.
 Using CBOR as a binary-friendly encoding standard, the hash array mapped TRIE is
 designed to address the principle of **Replicable** under the constrains of
 **Opaque** and **Binary key/content**.
