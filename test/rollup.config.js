@@ -12,7 +12,7 @@ const _cfg_ = {
 
 
 const cfg_node = { ..._cfg_,
-  external: id => builtinModules.includes(id),
+  external: id => /^node:/.test(id) || builtinModules.includes(id),
   plugins: [
     rpi_jsy({defines: {PLAT_NODEJS: true}}),
     ... _cfg_.plugins ]}

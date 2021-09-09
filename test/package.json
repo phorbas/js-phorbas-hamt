@@ -2,14 +2,13 @@
   "private": true,
   "dependencies": {
     "@phorbas/hamt": "file:..",
-    "@phorbas/opaque": "file:../../phorbas-opaque",
-    "@phorbas/store": "file:../../phorbas-store",
+    "@phorbas/opaque": "file:../../opaque",
+    "@phorbas/store": "file:../../store",
     "chai": "^4.3.4",
-    "mocha": "^9.0.3"
+    "mocha": "^9.1.1"
   },
   "devDependencies": {
-    "cbor-codec": "^0.8.0",
-    "qsrv": "^0.1.7"
+    "qsrv": "^0.1.9"
   },
   "scripts": {
     "serve": "qsrv -f unittest.html -- __unittest.iife.js",
