@@ -1,24 +1,15 @@
 import {HAMTTrieNode} from './_trie_node.jsy'
 
 export class HAMTContext ::
-  encode() :: throw new Error @ 'Uninitialized _hamt_ctx_.encode'
-  decode() :: throw new Error @ 'Uninitialized _hamt_ctx_.decode'
-
   constructor(stg, opt) ::
     _is_fn(stg.bkc_exists)
     _is_fn(stg.bkc_fetch)
     _is_fn(stg.bkc_store)
-    if opt :: this.init_codec(opt)
 
-    this._TrieNode = HAMTTrieNode.with_hamt_ctx(this)
-    this.stg = stg
-
-  init_codec({encode, decode}) ::
-    _is_fn(encode)
-    _is_fn(decode)
-    this.encode = encode
-    this.decode = decode
-
+    Object.defineProperties @ this, @{}
+      _TrieNode: @{} value: HAMTTrieNode.with_hamt_ctx(this)
+      stg: @{} value: stg
+      codec: @{} value: stg.opaque.codec
 
   create(slots, offset) ::
     return new this._TrieNode(slots, offset)
@@ -28,7 +19,7 @@ export class HAMTContext ::
     return k.k21pair()
 
   async load(k21pair, absent) ::
-    const {stg, decode} = this
+    const {stg, codec} = this
     const k = await stg.opaque.from_k21pair(k21pair)
 
     let [[_, ans]] = await stg.bkc_fetch([k.k2loc])
@@ -37,14 +28,14 @@ export class HAMTContext ::
     ans = await k.decode_content(ans)
     if ! ans :: return absent
 
-    ans = await decode(ans)
+    ans = await codec.decode(ans)
     if ! ans :: return absent
 
     return new this._TrieNode(ans.z, ans.i, k)
 
 
   async opaque_key(slots, offset) ::
-    let u8 = await this.encode({i: offset, z: slots})
+    let u8 = await this.codec.encode({i: offset, z: slots})
     const opaque_key = await this.stg.opaque.from_u8(u8)
     opaque_key.u8 = u8
     return opaque_key
@@ -56,10 +47,6 @@ export class HAMTContext ::
     const u8 = await opaque_key.encode_content(opaque_key.u8)
     await this.stg.bkc_store([[opaque_key.k2loc, u8]])
     return opaque_key
-
-
-export function init_hamt_shared_codec(codec) ::
-  HAMTContext.prototype.init_codec(codec)
 
 
 function _is_fn(v) ::
