@@ -2,12 +2,14 @@ import rpi_jsy from 'rollup-plugin-jsy'
 import rpi_dgnotify from 'rollup-plugin-dgnotify'
 import rpi_resolve from '@rollup/plugin-node-resolve'
 
-const _rpis_ = defines => [
+
+const _rpis_ = (defines, ...args) => [
   rpi_jsy({defines}),
   rpi_resolve(),
+  ...args,
   rpi_dgnotify()]
 
-const cfg_with = {
+const _cfg_ = {
   external: [],
   plugins: _rpis_({PLAT_ESM: true})}
 
@@ -22,6 +24,6 @@ export default [
 function * add_jsy(src_name, opt={}) {
   const input = `code/${src_name}${opt.ext || '.jsy'}`
 
-  yield ({ ... cfg_with, input,
+  yield ({ ... _cfg_, input,
     output: { ..._out_, file: `esm/${src_name}.mjs`, format: 'es' }})
 }

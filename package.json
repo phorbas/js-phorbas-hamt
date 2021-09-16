@@ -13,16 +13,13 @@
     "url": "git+ssh://git@github.com/phorbas/js-phorbas-hamt.git"
   },
   "files": [
-    "cjs/",
     "code/",
-    "esm/",
-    "umd/"
+    "esm/"
   ],
   "type": "module",
-  "module": "./esm/index.mjs",
   "exports": {
-    "./": "./",
-    ".": "./esm/index.mjs"
+    ".": "./esm/index.mjs",
+    "./esm/*": "./esm/*"
   },
   "dependencies": {},
   "devDependencies": {
@@ -32,7 +29,7 @@
     "rollup-plugin-jsy": "^1.7.3"
   },
   "scripts": {
-    "clean": "rm -rf ./cjs/* ./esm/* ./umd/*",
+    "clean": "rm -rf ./esm/*",
     "build": "rollup --config",
     "watch": "npm -s run build -- --watch",
     "pretest": "npm -s run build",
