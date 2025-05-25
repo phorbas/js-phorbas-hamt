@@ -10,11 +10,11 @@ const _bind_hk_split = (mask, i0, i1, s16) =>
     mask & @ ((u8[i0]<<8) | u8[i1]) >>> s16
 
 export function bind_hamt_hashkey(offset, n_slots) ::
-  const bit_w = _slot_bits.indexOf(n_slots)
-  const bit_o = offset * bit_w
-  const mask = (1 << bit_w) - 1
-  const i = bit_o >>> 3      // bit_o / 8
-  const bi = 8 - bit_w - (bit_o & 7) // bit_o % 8, most significant bits first
+  let bit_w = _slot_bits.indexOf(n_slots)
+  let bit_o = offset * bit_w
+  let mask = (1 << bit_w) - 1
+  let i = bit_o >>> 3      // bit_o / 8
+  let bi = 8 - bit_w - (bit_o & 7) // bit_o % 8, most significant bits first
   return bi >= 0
     ? _bind_hk_single @ mask, i, bi
     : _bind_hk_split @ mask, i, i+1, 8 + bi

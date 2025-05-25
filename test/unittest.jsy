@@ -1,3 +1,0 @@
-import './unit/smoke.jsy'
-import './unit/test_hamt_poem.jsy'
-import './unit/test_hamt_leonardo.jsy'

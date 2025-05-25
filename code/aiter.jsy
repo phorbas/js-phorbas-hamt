@@ -6,7 +6,7 @@ export async function * hamt_aiter_node_entries(trie, on_missing) ::
   while 0 !== q.length ::
     const tip = await q.pop(), {slots} = tip
     if undefined !== slots ::
-      for const ref of slots ::
+      for let ref of slots ::
         if is_trie_node(ref) ::
           q.push(tip.load_child(ref, ref))
 
@@ -18,7 +18,7 @@ export async function * hamt_aiter_node_entries(trie, on_missing) ::
     else missing.push(tip)
 
   if 0 !== missing.length ::
-    const err = new Error('Trie async iteration missing nodes')
+    let err = new Error('Trie async iteration missing nodes')
     err.missing = missing
     throw err
 

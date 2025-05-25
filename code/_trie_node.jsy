@@ -8,7 +8,7 @@ export class HAMTTrieNode ::
   static with_hamt_ctx(hamt_ctx) ::
     class HAMTTrieNode_ extends this ::
 
-    const p = HAMTTrieNode_.prototype
+    let p = HAMTTrieNode_.prototype
     p.hamt_ctx = hamt_ctx
     p._root_ = p
     return HAMTTrieNode_
@@ -22,7 +22,7 @@ export class HAMTTrieNode ::
   k21pair() :: return this.opaque_key.k21pair()
 
   create_child() ::
-    const {slots, offset} = this
+    let {slots, offset} = this
     return this.hamt_ctx.create(new Array(slots.length), 1+offset)
 
   verify_shape(delta) ::
@@ -35,17 +35,17 @@ export class HAMTTrieNode ::
       return trie
 
   async load_child(ref, absent) ::
-    const child = await this.hamt_ctx.load(ref, absent)
+    let child = await this.hamt_ctx.load(ref, absent)
     return child === absent ? absent :
       this.verify_shape(1)(child)
 
   async load_peer(ref, absent) ::
-    const sib = await this.hamt_ctx.load(ref, absent)
+    let sib = await this.hamt_ctx.load(ref, absent)
     return sib === absent ? absent :
       this.verify_shape(0)(sib)
 
   async create_peer(slots) ::
-    const {hamt_ctx, offset} = this
+    let {hamt_ctx, offset} = this
     return hamt_ctx.create(slots, offset)
 
   async store() ::
@@ -53,16 +53,16 @@ export class HAMTTrieNode ::
     if undefined !== opaque_key ::
       return 1
 
-    const {slots, offset, hamt_ctx} = this
+    let {slots, offset, hamt_ctx} = this
     this.opaque_key = opaque_key =
       await hamt_ctx.store(slots, offset)
     return true
 
 
   merge_onto(op_union) ::
-    const {slots} = this
-    for const hk in slots ::
-      const ref = slots[hk]
+    let {slots} = this
+    for let hk in slots ::
+      let ref = slots[hk]
       if undefined !== ref ::
         if undefined !== ref[1] ::
           op_union.add_node(hk, ref)
@@ -82,8 +82,8 @@ export class HAMTTrieNode ::
     return op_union
 
   async multi_union(iterable, trie_siblings) ::
-    const op_union = hamt_trie_union_op(this)
-    for const k2loc of iterable ::
+    let op_union = hamt_trie_union_op(this)
+    for let k2loc of iterable ::
       op_union.add(k2loc)
 
     return trie_siblings
@@ -92,10 +92,10 @@ export class HAMTTrieNode ::
 
 
   async union(iterable, trie_siblings) ::
-    const op_union = await this.multi_union @
+    let op_union = await this.multi_union @
       iterable, trie_siblings
 
-    const new_trie = await op_union.union_all()
+    let new_trie = await op_union.union_all()
     await new_trie.store()
     return new_trie
 

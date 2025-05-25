@@ -1,0 +1,39 @@
+import { kbc_api, kbc_js_map } from '@phorbas/store'
+import { kbc_opaque } from '@phorbas/store/esm/xform/index.js'
+
+import @{}
+  opaque_basic
+  opaque_tahoe
+from '@phorbas/opaque'
+
+const kbc_test = opaque => () => ::
+  let stg = kbc_opaque({ opaque, stg_tgt: kbc_api(kbc_js_map()) })
+  stg.opaque = opaque
+  return stg
+
+export const all_phorbas_test_ctx = @{}
+  opaque_basic: kbc_test(opaque_basic)
+  opaque_tahoe: kbc_test(opaque_tahoe)
+
+export const phorbas_test_ctx = all_phorbas_test_ctx.opaque_tahoe
+
+
+export async function store_text_lines(text_lines, sync, stg) ::
+  stg = stg.with_sync(sync)
+
+  const refs = await Promise.all @
+    Array.from @ text_lines,
+      ln => stg.kbc_store(ln)
+
+  const root_ref = await stg.store_obj(refs)
+
+  if sync.done :: sync.done()
+  return root_ref
+
+
+export async function load_text_lines(root_ref, stg) ::
+  const refs = await stg.fetch_obj(root_ref)
+  if ! refs :: return
+  return refs.map @
+    ln_ref => stg.kbc_fetch(ln_ref)
+

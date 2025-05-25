@@ -1,0 +1,60 @@
+import {describe, it} from '#test_bdd'
+import {assert} from 'chai'
+
+import {all_phorbas_test_ctx, phorbas_test_ctx} from './_utils.jsy'
+import {store_text_lines, load_text_lines} from './_utils.jsy'
+import {poem_text, poem_lines} from './poem.js'
+
+describe @ 'smoke', @::
+  it @ 'basics', @::
+    assert @ 'works'
+
+  for let [suite_name, test_kbc_opaque] of Object.entries(all_phorbas_test_ctx) ::
+    describe(suite_name, () => smoke_suite(test_kbc_opaque))
+
+
+function smoke_suite(phorbas_test_ctx) ::
+  it @ 'store api', @::>
+    let stg = await phorbas_test_ctx()
+    let ref = await stg.opaque.from_content(poem_text)
+    await stg.kbc_store(ref[0], ref.buf)
+
+    let rt_poem_buf = await stg.kbc_fetch(ref[0])
+    let rt_poem_text = await new Blob([rt_poem_buf]).text()
+    assert.equal(rt_poem_text, poem_text)
+
+  return
+  it @ 'single store roundtrip', @::>
+    let sync = new Set()
+    let stg = await phorbas_test_ctx()
+
+    let k21 = await store_text_lines(poem_lines, sync, stg)
+
+    let rt_lines = await Promise.all @
+      await load_text_lines(k21, stg)
+
+    assert.deepEqual(rt_lines, poem_lines)
+
+
+  it @ 'two store sync roundtrip', @::>
+    const sync = new Set()
+    const stg_src = await phorbas_test_ctx()
+
+    const k21 = await store_text_lines(poem_lines, sync, stg_src)
+
+    const stg_dst = await phorbas_test_ctx()
+    :: // prove it DOES NOT work without sync
+      assert.equal @
+        await load_text_lines(k21, stg_dst)
+        undefined
+
+    :: // sync everything in the set
+      const u8_pairs = await stg_src.kbc_fetch(sync)
+      await stg_dst.kbc_store(u8_pairs)
+
+    :: // prove it DOES work after sync
+      const rt_lines = await Promise.all @
+        await load_text_lines(k21, stg_dst)
+
+      assert.deepEqual(rt_lines, poem_lines)
+

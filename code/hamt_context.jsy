@@ -15,12 +15,12 @@ export class HAMTContext ::
     return new this._TrieNode(slots, offset)
 
   async as_h21pair(ref) ::
-    const k = await stg.opaque.from_k21pair(ref)
+    let k = await stg.opaque.from_k21pair(ref)
     return k.k21pair()
 
   async load(k21pair, absent) ::
-    const {stg, codec} = this
-    const k = await stg.opaque.from_k21pair(k21pair)
+    let {stg, codec} = this
+    let k = await stg.opaque.from_k21pair(k21pair)
 
     let [[_, ans]] = await stg.bkc_fetch([k.k2loc])
     if ! ans :: return absent
@@ -36,15 +36,15 @@ export class HAMTContext ::
 
   async opaque_key(slots, offset) ::
     let u8 = await this.codec.encode({i: offset, z: slots})
-    const opaque_key = await this.stg.opaque.from_u8(u8)
+    let opaque_key = await this.stg.opaque.from_u8(u8)
     opaque_key.u8 = u8
     return opaque_key
 
 
   async store(slots, offset) ::
-    const opaque_key = await this.opaque_key(slots, offset)
+    let opaque_key = await this.opaque_key(slots, offset)
 
-    const u8 = await opaque_key.encode_content(opaque_key.u8)
+    let u8 = await opaque_key.encode_content(opaque_key.u8)
     await this.stg.bkc_store([[opaque_key.k2loc, u8]])
     return opaque_key
 

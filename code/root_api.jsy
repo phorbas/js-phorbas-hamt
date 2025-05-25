@@ -9,11 +9,11 @@ export function bind_hamt_root(hamt_ctx) ::
 
   const root_api = @{}
     async merge(trie_iterable) ::
-      const new_trie = await wm_trie(this).union([], trie_iterable)
+      let new_trie = await wm_trie(this).union([], trie_iterable)
       return hamt_root(new_trie)
 
     async union(iterable) ::
-      const new_trie = await wm_trie(this).union(iterable)
+      let new_trie = await wm_trie(this).union(iterable)
       return hamt_root(new_trie)
 
     multi_union() ::
@@ -40,7 +40,7 @@ export function bind_hamt_root(hamt_ctx) ::
 
   function hamt_root(trie) ::
     if null != trie ::
-      const root = @{} __proto__: root_api
+      let root = @{} __proto__: root_api
       _wm_trie.set(root, trie)
       return root
 

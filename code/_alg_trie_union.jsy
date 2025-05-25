@@ -1,5 +1,3 @@
-import {asy_join, vec_equal} from './_utils.jsy'
-
 
 export function hamt_trie_union_op(trie, hamt_root) ::
   let {slots, hk_offset} = trie
@@ -17,7 +15,8 @@ export function hamt_trie_union_op(trie, hamt_root) ::
       // join on forked operations
       const _o_pq = _pq
       _pq = false
-      await asy_join(_o_pq)
+      while 0 !== _o_pq.length ::
+        await _o_pq.pop()
 
       // scatter union ops in parallel
       const new_slots = slots.slice()
@@ -27,7 +26,8 @@ export function hamt_trie_union_op(trie, hamt_root) ::
       _ops = false
 
       // gather parallel union ops 
-      await asy_join(_o_fin)
+      while 0 !== _o_fin.length ::
+        await _o_fin.pop()
 
       // new unioned trie complete
       const new_trie = await trie.create_peer(new_slots)
@@ -36,14 +36,14 @@ export function hamt_trie_union_op(trie, hamt_root) ::
         : hamt_root ? hamt_root(new_trie) : new_trie
 
   function add(k2loc) ::
-    const hk = hk_offset(k2loc)
+    let hk = hk_offset(k2loc)
     if null != hk ::
-      const hk_op = _ops[hk] || _hamt_slot_union(slots[hk])
+      let hk_op = _ops[hk] || _hamt_slot_union(slots[hk])
       _ops[hk] = hk_op.add(k2loc)
 
   function add_node(hk, ref) ::
     if null != hk ::
-      const hk_op = _ops[hk] || _hamt_slot_union(slots[hk])
+      let hk_op = _ops[hk] || _hamt_slot_union(slots[hk])
       _ops[hk] = hk_op.add_node(ref)
 
 
@@ -59,8 +59,8 @@ const _slot_leaf = @{}
     return @{} __proto__: this, v: k2loc
 
   add(k2loc) ::
-    const {v} = this
-    return vec_equal(v, k2loc) ? this
+    let {v} = this
+    return _vec_equal(v, k2loc) ? this
       : _slot_union.create([v, k2loc])
 
   add_node(ref) ::
@@ -108,8 +108,8 @@ const _slot_merge = @{}
         await trie.hamt_ctx.as_h21pair(ref)
 
     else ::
-      const child = await trie.load_child(ref)
-      const new_child = await child.union(lst, sib)
+      let child = await trie.load_child(ref)
+      let new_child = await child.union(lst, sib)
       slots[hk] = new_child.k21pair()
 
 
@@ -119,4 +119,14 @@ function _hamt_slot_union(slot) ::
     : undefined === slot[1]
       ? _slot_union.create([slot[0]])
       : _slot_merge.create(slot, [])
+
+export function _vec_equal(va, vb) ::
+  let len = va.length
+  if len !== vb.length ::
+    return false
+
+  for let i=0; i<len; i++ ::
+    if va[i] !== vb[i] ::
+      return false
+  return true
 

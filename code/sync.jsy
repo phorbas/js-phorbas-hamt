@@ -12,9 +12,9 @@ export async function hamt_sync_batch(trie, stg_source, stg_destination, opt={})
     : opt.only_leaves ? is_trie_leaf : Boolean
 
   for await let {slots} of hamt_aiter_node_entries(trie) ::
-    const refs_all = slots.filter(fn_filter).map(_bkc_k2loc)
+    let refs_all = slots.filter(fn_filter).map(_bkc_k2loc)
 
-    const batch = await stg_source.bkc_fetch @
+    let batch = await stg_source.bkc_fetch @
       sync_all ? refs_all :
         _bkc_only_missing @ await stg_destination.bkc_exists(refs_all)
 

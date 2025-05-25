@@ -1,29 +1,26 @@
 import rpi_jsy from 'rollup-plugin-jsy'
-import rpi_dgnotify from 'rollup-plugin-dgnotify'
 import rpi_resolve from '@rollup/plugin-node-resolve'
 
+const external = id => /^\w+:|^#/.test(id)
 
-const _rpis_ = (defines, ...args) => [
-  rpi_jsy({defines}),
-  rpi_resolve(),
-  ...args,
-  rpi_dgnotify()]
+export const pkg_cfg = {
+  plugins: [ rpi_jsy(), rpi_resolve() ],
+  external,
+  output: { dir: 'esm', format: 'es', sourcemap: true },
+  input: {
+    'index': './code/index.jsy',
+  },
+}
 
-const _cfg_ = {
-  external: [],
-  plugins: _rpis_({PLAT_ESM: true})}
-
-const _out_ = { sourcemap: true }
-
+export const pkg_test_cfg = {
+  plugins: [ rpi_jsy(), rpi_resolve() ],
+  external,
+  output: { dir: 'esm-test', format: 'es', sourcemap: true },
+  input: './test/unittest.js',
+}
 
 export default [
-  ... add_jsy('index'),
+  pkg_cfg,
+  pkg_test_cfg,
 ]
 
-
-function * add_jsy(src_name, opt={}) {
-  const input = `code/${src_name}${opt.ext || '.jsy'}`
-
-  yield ({ ... _cfg_, input,
-    output: { ..._out_, file: `esm/${src_name}.mjs`, format: 'es' }})
-}

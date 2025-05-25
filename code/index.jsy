@@ -6,17 +6,17 @@ export function hamt_new(stg, opt) ::
   return hamt_new_ln2(4, stg, opt)
 
 export function hamt_new_ln2(n_bits, stg, opt) ::
-  const hamt_ctx = new HAMTContext(stg, opt)
+  let hamt_ctx = new HAMTContext(stg, opt)
   return bind_hamt_root(hamt_ctx) @
     hamt_ctx.create(Array(1 << n_bits), 0)
 
 export async function hamt_load(ref_trie, stg, opt) ::
-  const hamt_ctx = new HAMTContext(stg, opt)
+  let hamt_ctx = new HAMTContext(stg, opt)
   return bind_hamt_root(hamt_ctx) @
     await hamt_ctx.load(ref_trie)
 
 export async function hamt_load_merged(trie_iterable, stg, opt) ::
   trie_iterable = Array.from(trie_iterable)
-  const root = await hamt_load(trie_iterable.shift(), stg, opt)
+  let root = await hamt_load(trie_iterable.shift(), stg, opt)
   return root.merge(trie_iterable)
 

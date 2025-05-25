@@ -3,10 +3,10 @@
 PHORBAS HAMT is inspired by CouchDB's syncing, CRDTs, and immutable CAS.
 Using CBOR as a binary-friendly encoding standard, the hash array mapped TRIE is
 designed to address the principle of **Replicable** under the constrains of
-**Opaque** and **Binary key/content**.
+**Opaque** and **Binary content**.
 
 - [PHORBAS Opaque][] handles the principle of **Hashed**, **Opaque**, and **Addressable**.
-- [PHORBAS Store][] handles the principles of **Persistent**, **Binary key/content**, **Addressable**, and **Store**.
+- [PHORBAS Store][] handles the principles of **Persistent**, **Binary content**, **Addressable**, and **Store**.
 
  [PHORBAS Opaque]: https://github.com/phorbas/js-phorbas-opaque
  [PHORBAS Store]: https://github.com/phorbas/js-phorbas-store
@@ -27,7 +27,7 @@ pasture" -- in this case, safe pasture to for data storage.
     H - Hashed
     O - Opaque
     R - Replicable
-    B - Binary key/content
+    B - Binary content
     A - Addressable
     S - Store
 

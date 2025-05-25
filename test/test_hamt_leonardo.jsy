@@ -2,7 +2,7 @@ import {hamt_new, hamt_new_ln2, hamt_load_merged} from '@phorbas/hamt'
 
 import {assert, all_phorbas_test_ctx} from './_utils.jsy'
 
-import {leonardo_quotes} from './leonardo_quotes.mjs'
+import {leonardo_quotes} from './leonardo_quotes.js'
 
 const hamt_test_bits = [8,7,6,5,4,3,2,1]
 //const hamt_test_bits = [6, 4]
