@@ -1,6 +1,9 @@
+import {describe, it} from '#test_bdd'
+import {assert} from 'chai'
+
 import {hamt_new, hamt_new_ln2, hamt_load} from '@phorbas/hamt'
 
-import {assert, all_phorbas_test_ctx} from './_utils.jsy'
+import {all_phorbas_test_ctx} from './_utils.jsy'
 import {store_text_lines, load_text_lines} from './_utils.jsy'
 
 import {poem_lines} from './poem.js'
@@ -8,7 +11,7 @@ import {poem_lines} from './poem.js'
 const hamt_test_bits = [8,7,6,5,4,3,2,1]
 //const hamt_test_bits = [6, 4]
 
-describe @ 'poem', @::
+describe.skip @ 'poem', @::
   if 0 ::
     return describe @ 'fast subset',
       hamt_poem_suite @

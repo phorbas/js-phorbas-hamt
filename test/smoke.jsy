@@ -7,13 +7,13 @@ import {poem_text, poem_lines} from './poem.js'
 
 describe @ 'smoke', @::
   it @ 'basics', @::
-    assert @ 'works'
+    assert.ok @ 'works'
 
-  for let [suite_name, test_kbc_opaque] of Object.entries(all_phorbas_test_ctx) ::
-    describe(suite_name, () => smoke_suite(test_kbc_opaque))
+  for let [suite_name, phorbas_test_ctx] of Object.entries(all_phorbas_test_ctx) ::
+    describe @ suite_name, smoke_suite(phorbas_test_ctx)
 
 
-function smoke_suite(phorbas_test_ctx) ::
+function smoke_suite(phorbas_test_ctx) :: return @::
   it @ 'store api', @::>
     let stg = await phorbas_test_ctx()
     let ref = await stg.opaque.from_content(poem_text)
@@ -23,8 +23,7 @@ function smoke_suite(phorbas_test_ctx) ::
     let rt_poem_text = await new Blob([rt_poem_buf]).text()
     assert.equal(rt_poem_text, poem_text)
 
-  return
-  it @ 'single store roundtrip', @::>
+  it.skip @ 'single store roundtrip', @::>
     let sync = new Set()
     let stg = await phorbas_test_ctx()
 
@@ -36,7 +35,7 @@ function smoke_suite(phorbas_test_ctx) ::
     assert.deepEqual(rt_lines, poem_lines)
 
 
-  it @ 'two store sync roundtrip', @::>
+  it.skip @ 'two store sync roundtrip', @::>
     const sync = new Set()
     const stg_src = await phorbas_test_ctx()
 
